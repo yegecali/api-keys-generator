@@ -74,3 +74,98 @@ jobs:
         with:
           name: build-jar
           path: ${{ steps.jar.outputs.JAR_PATH }}
+
+      - name: 📋 Display Build Information
+        run: |
+          echo "================================"
+          echo "✅ Build completed successfully"
+          echo "================================"
+          echo ""
+          echo "📦 JAR Location:"
+          echo "   ${{ steps.jar.outputs.JAR_PATH }}"
+          echo ""
+          echo "📌 Version:"
+          echo "   v${{ steps.version.outputs.VERSION }}"
+          echo ""
+          echo "🚀 How to run the JAR:"
+          echo "   java -jar ${{ steps.jar.outputs.JAR_PATH }}"
+          echo ""
+          echo "⏱️  The application will start on http://localhost:8080"
+          echo ""
+
+      - name: 🧪 Run Application and Test Endpoints
+        run: |
+          echo "================================"
+          echo "🧪 Testing API Endpoints"
+          echo "================================"
+          echo ""
+          
+          # Start the application in background
+          java -jar ${{ steps.jar.outputs.JAR_PATH }} &
+          APP_PID=$!
+          
+          # Wait for application to start
+          echo "⏳ Waiting for application to start..."
+          sleep 10
+          
+          # Check if application is running
+          if ! kill -0 $APP_PID 2>/dev/null; then
+            echo "❌ Failed to start the application"
+            exit 1
+          fi
+          
+          echo "✅ Application is running (PID: $APP_PID)"
+          echo ""
+          echo "📌 Testing endpoints..."
+          echo ""
+          
+          # Test 1: Generate RSA 2048 keys
+          echo "1️⃣  Generate RSA 2048 keys:"
+          echo "   Command:"
+          echo "   curl -X GET http://localhost:8080/keys/rsa"
+          echo ""
+          echo "   Response:"
+          curl -s http://localhost:8080/keys/rsa | jq . || echo "Failed to get response"
+          echo ""
+          echo ""
+          
+          # Test 2: Generate RSA 4096 keys
+          echo "2️⃣  Generate RSA 4096 keys:"
+          echo "   Command:"
+          echo "   curl -X GET 'http://localhost:8080/keys?type=RSA&size=4096'"
+          echo ""
+          echo "   Response:"
+          curl -s 'http://localhost:8080/keys?type=RSA&size=4096' | jq . || echo "Failed to get response"
+          echo ""
+          echo ""
+          
+          # Test 3: Generate AES-GCM 256 key
+          echo "3️⃣  Generate AES-GCM 256 key:"
+          echo "   Command:"
+          echo "   curl -X GET 'http://localhost:8080/keys?type=AES_GCM&size=256'"
+          echo ""
+          echo "   Response:"
+          curl -s 'http://localhost:8080/keys?type=AES_GCM&size=256' | jq . || echo "Failed to get response"
+          echo ""
+          echo ""
+          
+          # Test 4: Generate AES-GCM 128 key
+          echo "4️⃣  Generate AES-GCM 128 key:"
+          echo "   Command:"
+          echo "   curl -X GET 'http://localhost:8080/keys?type=AES_GCM&size=128'"
+          echo ""
+          echo "   Response:"
+          curl -s 'http://localhost:8080/keys?type=AES_GCM&size=128' | jq . || echo "Failed to get response"
+          echo ""
+          echo ""
+          
+          # Kill the application
+          echo "🛑 Stopping application..."
+          kill $APP_PID 2>/dev/null || true
+          wait $APP_PID 2>/dev/null || true
+          echo "✅ Application stopped"
+          echo ""
+          echo "================================"
+          echo "✅ All tests completed!"
+          echo "================================"
+
