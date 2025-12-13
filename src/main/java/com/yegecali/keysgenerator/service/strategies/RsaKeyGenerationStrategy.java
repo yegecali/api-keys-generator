@@ -1,5 +1,6 @@
 package com.yegecali.keysgenerator.service.strategies;
 
+import com.yegecali.keysgenerator.dto.CryptoAlgorithm;
 import com.yegecali.keysgenerator.exception.KeyGenerationException;
 import com.yegecali.keysgenerator.model.KeyModel;
 import com.yegecali.keysgenerator.service.KeyGenerationRequest;
@@ -19,7 +20,7 @@ public class RsaKeyGenerationStrategy implements KeyGenerationStrategy {
 
     @Override
     public String getType() {
-        return "RSA";
+        return CryptoAlgorithm.RSA.getValue();
     }
 
     @Override
@@ -37,7 +38,7 @@ public class RsaKeyGenerationStrategy implements KeyGenerationStrategy {
             String privatePem = toPem(priv.getEncoded(), "PRIVATE KEY");
 
             KeyModel model = new KeyModel();
-            model.setType("RSA");
+            model.setType(CryptoAlgorithm.RSA.getValue());
             model.setKeySize(keySize);
             model.setPublicKey(publicPem);
             model.setPrivateKey(privatePem);
@@ -49,7 +50,8 @@ public class RsaKeyGenerationStrategy implements KeyGenerationStrategy {
     }
 
     private static String toPem(byte[] derBytes, String type) {
-        String b64 = Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(derBytes);
-        return "-----BEGIN " + type + "-----\n" + b64 + "\n" + "-----END " + type + "-----\n";
+        // Usar Base64 simple sin saltos de línea para evitar caracteres de escape en JSON
+        String b64 = Base64.getEncoder().encodeToString(derBytes);
+        return b64;
     }
 }

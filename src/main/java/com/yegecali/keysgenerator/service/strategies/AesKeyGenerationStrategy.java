@@ -1,5 +1,6 @@
 package com.yegecali.keysgenerator.service.strategies;
 
+import com.yegecali.keysgenerator.dto.CryptoAlgorithm;
 import com.yegecali.keysgenerator.exception.KeyGenerationException;
 import com.yegecali.keysgenerator.model.KeyModel;
 import com.yegecali.keysgenerator.service.KeyGenerationRequest;
@@ -17,7 +18,7 @@ public class AesKeyGenerationStrategy implements KeyGenerationStrategy {
 
     @Override
     public String getType() {
-        return "AES_GCM";
+        return CryptoAlgorithm.AES_GCM.getValue();
     }
 
     @Override
@@ -37,7 +38,7 @@ public class AesKeyGenerationStrategy implements KeyGenerationStrategy {
             String ivB64 = Base64.getEncoder().encodeToString(iv);
 
             KeyModel model = new KeyModel();
-            model.setType("AES_GCM");
+            model.setType(CryptoAlgorithm.AES_GCM.getValue());
             model.setKeySize(keySize);
             model.setSymmetricKey(keyB64);
             model.setIv(ivB64);
