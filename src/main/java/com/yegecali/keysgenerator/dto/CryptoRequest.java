@@ -1,22 +1,34 @@
 package com.yegecali.keysgenerator.dto;
 
-public class CryptoRequest {
-    private String type;
-    private String key;
-    private String payload;
-    private String iv;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type"
+)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = EncryptRsaRequest.class, name = "RSA"),
+    @JsonSubTypes.Type(value = EncryptAesRequest.class, name = "AES_GCM")
+})
+public abstract class CryptoRequest {
+    protected CryptoAlgorithm type;
+    protected String key;
+    protected String payload;
+    protected String iv;
 
     public CryptoRequest() {}
 
-    public CryptoRequest(String type, String key, String payload, String iv) {
+    public CryptoRequest(CryptoAlgorithm type, String key, String payload, String iv) {
         this.type = type;
         this.key = key;
         this.payload = payload;
         this.iv = iv;
     }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public CryptoAlgorithm getType() { return type; }
+    public void setType(CryptoAlgorithm type) { this.type = type; }
     public String getKey() { return key; }
     public void setKey(String key) { this.key = key; }
     public String getPayload() { return payload; }
