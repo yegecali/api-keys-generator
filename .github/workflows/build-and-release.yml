@@ -38,9 +38,10 @@ jobs:
         id: jar
         run: |
           set -e
-          JAR=$(ls target/*.jar 2>/dev/null | head -n1 || true)
-          if [ -z "$JAR" ]; then
-            echo "No JAR found in target/"
+          # For Quarkus, use the runnable JAR
+          JAR="target/quarkus-app/quarkus-run.jar"
+          if [ ! -f "$JAR" ]; then
+            echo "No JAR found at $JAR"
             exit 1
           fi
           echo "JAR_PATH=$JAR" >> $GITHUB_OUTPUT
@@ -65,7 +66,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ steps.jar.outputs.JAR_PATH }}
-          asset_name: app-${{ steps.version.outputs.VERSION }}.jar
+          asset_name: quarkus-run-${{ steps.version.outputs.VERSION }}.jar
           asset_content_type: application/java-archive
 
       - name: Artifact for PRs (optional)
