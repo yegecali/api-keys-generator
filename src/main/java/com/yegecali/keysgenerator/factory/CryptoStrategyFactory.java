@@ -1,6 +1,7 @@
 package com.yegecali.keysgenerator.factory;
 
 import com.yegecali.keysgenerator.crypto.strategies.CryptoStrategy;
+import com.yegecali.keysgenerator.dto.CryptoAlgorithm;
 import com.yegecali.keysgenerator.exception.NoSuchKeyGeneratorException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
@@ -18,6 +19,11 @@ public class CryptoStrategyFactory {
             if (s.getAlgorithm().equalsIgnoreCase(type)) return s;
         }
         throw new NoSuchKeyGeneratorException("No CryptoStrategy for type: " + type);
+    }
+
+    public CryptoStrategy get(CryptoAlgorithm algorithm) {
+        if (algorithm == null) throw new NoSuchKeyGeneratorException("Algorithm is required");
+        return get(algorithm.getValue());
     }
 }
 
