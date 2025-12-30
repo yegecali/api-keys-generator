@@ -1,18 +1,18 @@
-package com.yegecali.keysgenerator.service.strategies;
+package com.yegecali.keysgenerator.service.strategies.generate;
 
-import com.yegecali.keysgenerator.exception.NoSuchKeyGeneratorException;
-import com.yegecali.keysgenerator.service.KeyGenerator;
+import com.yegecali.keysgenerator.exception.ApplicationException;
+import com.yegecali.keysgenerator.exception.ErrorCode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
 @ApplicationScoped
-public class KeyGenerationStrategyFactory {
+public class KeyGenerationFactory {
 
     private final Instance<KeyGenerator> strategies;
 
     @Inject
-    public KeyGenerationStrategyFactory(Instance<KeyGenerator> strategies) {
+    public KeyGenerationFactory(Instance<KeyGenerator> strategies) {
         this.strategies = strategies;
     }
 
@@ -25,6 +25,6 @@ public class KeyGenerationStrategyFactory {
                 return s;
             }
         }
-        throw new NoSuchKeyGeneratorException("No KeyGenerator registered for type: " + type);
+        throw ApplicationException.unknownType("No KeyGenerator registered for type: " + type);
     }
 }

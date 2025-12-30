@@ -1,10 +1,10 @@
 package com.yegecali.keysgenerator.resources;
 
-import com.yegecali.keysgenerator.dto.KeyResponse;
+import com.yegecali.keysgenerator.openapi.model.KeyResponse;
 import com.yegecali.keysgenerator.model.KeyModel;
-import com.yegecali.keysgenerator.service.KeyGenerationRequest;
-import com.yegecali.keysgenerator.service.KeyGenerator;
-import com.yegecali.keysgenerator.factory.KeyGeneratorFactory;
+import com.yegecali.keysgenerator.openapi.model.KeyGenerationRequest;
+import com.yegecali.keysgenerator.service.strategies.generate.KeyGenerator;
+import com.yegecali.keysgenerator.service.strategies.generate.KeyGenerationFactory;
 import com.yegecali.keysgenerator.validator.KeyRequestValidator;
 import com.yegecali.keysgenerator.mapper.KeyResponseMapper;
 import jakarta.inject.Inject;
@@ -25,7 +25,7 @@ public class RsaKeyResource {
     KeyRequestValidator validator;
 
     @Inject
-    KeyGeneratorFactory factory;
+    KeyGenerationFactory factory;
 
     @Inject
     KeyResponseMapper mapper;
@@ -44,7 +44,7 @@ public class RsaKeyResource {
     public Response generateGeneric(@QueryParam("type") String typeParam,
                                     @QueryParam("size") Integer size) {
         KeyGenerationRequest req = validator.validateAndBuild(typeParam, size);
-        KeyGenerator generator = factory.get(req.getType());
+        KeyGenerator generator = factory.get(req.getType() == null ? null : req.getType().getValue());
         KeyModel model = generator.generate(req);
         KeyResponse resp = mapper.map(model);
         return Response.ok(resp).build();

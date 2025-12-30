@@ -1,9 +1,9 @@
 package com.yegecali.keysgenerator.resources;
 
-import com.yegecali.keysgenerator.dto.CryptoRequest;
-import com.yegecali.keysgenerator.dto.CryptoResponse;
-import com.yegecali.keysgenerator.crypto.strategies.CryptoStrategy;
-import com.yegecali.keysgenerator.factory.CryptoStrategyFactory;
+import com.yegecali.keysgenerator.openapi.model.CryptoRequest;
+import com.yegecali.keysgenerator.openapi.model.CryptoResponse;
+import com.yegecali.keysgenerator.service.strategies.encrypt.CryptoStrategy;
+import com.yegecali.keysgenerator.service.strategies.encrypt.CryptoStrategyFactory;
 import com.yegecali.keysgenerator.validator.CryptoRequestValidator;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -41,4 +41,3 @@ public class CryptoResource {
         return strategy.decrypt(req);
     }
 }
-

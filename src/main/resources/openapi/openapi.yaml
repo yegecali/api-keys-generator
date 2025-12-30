@@ -1,0 +1,261 @@
+openapi: 3.0.3
+info:
+  title: Keys Generator API
+  version: 1.0.0
+  description: API para generación y cifrado/descifrado de claves (RSA y AES-GCM)
+servers:
+  - url: /
+paths:
+  /crypto/encrypt:
+    post:
+      summary: Encrypt payload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CryptoRequest'
+      responses:
+        '200':
+          description: Encrypted response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /crypto/decrypt:
+    post:
+      summary: Decrypt payload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CryptoRequest'
+      responses:
+        '200':
+          description: Decrypted response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /keys/rsa:
+    get:
+      summary: Legacy RSA key generation endpoint
+      parameters:
+        - name: size
+          in: query
+          schema:
+            type: integer
+          required: false
+          description: Key size in bits
+      responses:
+        '200':
+          description: Key generation response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /keys:
+    get:
+      summary: Generic key generation endpoint
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [RSA, AES_GCM]
+          required: false
+          description: Type of key to generate
+        - name: size
+          in: query
+          schema:
+            type: integer
+          required: false
+          description: Key size in bits
+      responses:
+        '200':
+          description: Key generation response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    CryptoRequest:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [RSA, AES_GCM]
+        key:
+          type: string
+          description: Public key for RSA or symmetric key for AES-GCM (base64)
+        payload:
+          type: string
+          description: Plaintext (for encrypt) or ciphertext (for decrypt)
+        iv:
+          type: string
+          description: Initialization vector for AES-GCM (base64). Not used for RSA.
+      discriminator:
+        propertyName: type
+      oneOf:
+        - $ref: '#/components/schemas/EncryptRsaRequest'
+        - $ref: '#/components/schemas/EncryptAesRequest'
+    EncryptRsaRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [RSA]
+        key:
+          type: string
+          description: RSA public key (base64)
+        payload:
+          type: string
+      required: [type, key, payload]
+    EncryptAesRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [AES_GCM]
+        key:
+          type: string
+          description: Symmetric key (base64)
+        payload:
+          type: string
+        iv:
+          type: string
+          description: IV (base64)
+      required: [type, key, payload, iv]
+    CryptoResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        ciphertext:
+          type: string
+        iv:
+          type: string
+        plaintext:
+          type: string
+        error:
+          type: string
+    KeyGenerationRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [RSA, AES_GCM]
+        keySize:
+          type: integer
+        options:
+          type: object
+          additionalProperties:
+            type: string
+    KeyResponse:
+      type: object
+      properties:
+        type:
+          type: string
+        keySize:
+          type: integer
+        publicKey:
+          type: string
+        privateKey:
+          type: string
+        symmetricKey:
+          type: string
+        iv:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+    KeyModel:
+      type: object
+      properties:
+        type:
+          type: string
+        keySize:
+          type: integer
+        publicKey:
+          type: string
+        privateKey:
+          type: string
+        symmetricKey:
+          type: string
+        iv:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+    RsaKeyModel:
+      type: object
+      properties:
+        algorithm:
+          type: string
+        keySize:
+          type: integer
+        publicKey:
+          type: string
+        privateKey:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+

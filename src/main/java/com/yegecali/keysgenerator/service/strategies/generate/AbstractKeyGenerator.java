@@ -1,8 +1,8 @@
-package com.yegecali.keysgenerator.service.strategies;
+package com.yegecali.keysgenerator.service.strategies.generate;
 
 import com.yegecali.keysgenerator.exception.KeyGenerationException;
 import com.yegecali.keysgenerator.model.KeyModel;
-import com.yegecali.keysgenerator.service.KeyGenerationRequest;
+import com.yegecali.keysgenerator.openapi.model.KeyGenerationRequest;
 import org.jboss.logging.Logger;
 
 import java.util.Base64;
@@ -10,7 +10,7 @@ import java.util.Base64;
 /**
  * Shared base class for key generators with common helpers.
  */
-public abstract class AbstractKeyGenerator implements com.yegecali.keysgenerator.service.KeyGenerator {
+public abstract class AbstractKeyGenerator implements KeyGenerator {
 
     protected Logger getLogger() {
         return Logger.getLogger(this.getClass());
@@ -35,4 +35,3 @@ public abstract class AbstractKeyGenerator implements com.yegecali.keysgenerator
         return new KeyGenerationException(message + (e == null ? "" : (": " + e.getMessage())), e);
     }
 }
-

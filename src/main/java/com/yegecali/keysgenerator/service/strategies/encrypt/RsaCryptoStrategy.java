@@ -1,9 +1,7 @@
-package com.yegecali.keysgenerator.crypto.strategies;
+package com.yegecali.keysgenerator.service.strategies.encrypt;
 
-import com.yegecali.keysgenerator.dto.CryptoRequest;
-import com.yegecali.keysgenerator.dto.EncryptRsaRequest;
-import com.yegecali.keysgenerator.dto.CryptoResponse;
-import com.yegecali.keysgenerator.dto.CryptoAlgorithm;
+import com.yegecali.keysgenerator.openapi.model.CryptoRequest;
+import com.yegecali.keysgenerator.openapi.model.CryptoResponse;
 import com.yegecali.keysgenerator.exception.KeyGenerationException;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -15,22 +13,19 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
 @ApplicationScoped
-public class RsaCryptoStrategy extends AbstractCryptoStrategy {
+public class RsaCryptoStrategy extends AbstractCryptoStrategy implements CryptoStrategy {
 
     @Override
-    public String getAlgorithm() { return CryptoAlgorithm.RSA.getValue(); }
+    public String getAlgorithm() { return "RSA"; }
 
     @Override
     public CryptoResponse encrypt(CryptoRequest request) {
-        EncryptRsaRequest rsaRequest = (request instanceof EncryptRsaRequest)
-            ? (EncryptRsaRequest) request
-            : castToEncryptRsaRequest(request);
-
+        // The generated models are separate POJOs; inspect the request type and read fields directly
         try {
-            String publicPem = rsaRequest.getKey();
+            String publicPem = request.getKey();
             if (publicPem == null) throw new KeyGenerationException("Missing public key for RSA encryption");
             PublicKey pub = parsePublicKey(publicPem);
-            byte[] plaintext = toUtf8Bytes(rsaRequest.getPayload());
+            byte[] plaintext = toUtf8Bytes(request.getPayload());
 
             Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
             cipher.init(Cipher.ENCRYPT_MODE, pub);
@@ -44,15 +39,11 @@ public class RsaCryptoStrategy extends AbstractCryptoStrategy {
 
     @Override
     public CryptoResponse decrypt(CryptoRequest request) {
-        EncryptRsaRequest rsaRequest = (request instanceof EncryptRsaRequest)
-            ? (EncryptRsaRequest) request
-            : castToEncryptRsaRequest(request);
-
         try {
-            String privatePem = rsaRequest.getKey();
+            String privatePem = request.getKey();
             if (privatePem == null) throw new KeyGenerationException("Missing private key for RSA decryption");
             PrivateKey priv = parsePrivateKey(privatePem);
-            byte[] ct = base64Decode(rsaRequest.getPayload());
+            byte[] ct = base64Decode(request.getPayload());
 
             Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
             cipher.init(Cipher.DECRYPT_MODE, priv);
@@ -62,15 +53,6 @@ public class RsaCryptoStrategy extends AbstractCryptoStrategy {
         } catch (Exception e) {
             throw wrapException("RSA decryption failed", e);
         }
-    }
-
-    private EncryptRsaRequest castToEncryptRsaRequest(CryptoRequest request) {
-        EncryptRsaRequest rsaRequest = new EncryptRsaRequest();
-        rsaRequest.setType(request.getType());
-        rsaRequest.setKey(request.getKey());
-        rsaRequest.setPayload(request.getPayload());
-        rsaRequest.setIv(request.getIv());
-        return rsaRequest;
     }
 
     private String normalizePem(String pem) {
