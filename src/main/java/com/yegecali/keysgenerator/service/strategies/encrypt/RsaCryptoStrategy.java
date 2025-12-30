@@ -13,17 +13,15 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 
 @ApplicationScoped
-public class RsaCryptoStrategy implements CryptoStrategy {
+public class RsaCryptoStrategy extends AbstractCryptoStrategy {
 
     @Override
     public String getAlgorithm() { return CryptoAlgorithm.RSA.getValue(); }
 
     @Override
-    public CryptoResponse encrypt(CryptoRequest request) throws Exception {
-        // Cast a EncryptRsaRequest si es posible, sino usar CryptoRequest como fallback
+    public CryptoResponse encrypt(CryptoRequest request) {
         EncryptRsaRequest rsaRequest = (request instanceof EncryptRsaRequest)
             ? (EncryptRsaRequest) request
             : castToEncryptRsaRequest(request);
@@ -32,24 +30,20 @@ public class RsaCryptoStrategy implements CryptoStrategy {
             String publicPem = rsaRequest.getKey();
             if (publicPem == null) throw new KeyGenerationException("Missing public key for RSA encryption");
             PublicKey pub = parsePublicKey(publicPem);
-            byte[] plaintext = rsaRequest.getPayload().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            byte[] plaintext = toUtf8Bytes(rsaRequest.getPayload());
 
             Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
             cipher.init(Cipher.ENCRYPT_MODE, pub);
             byte[] ct = cipher.doFinal(plaintext);
 
-            CryptoResponse resp = new CryptoResponse();
-            resp.setSuccess(true);
-            resp.setCiphertext(Base64.getEncoder().encodeToString(ct));
-            return resp;
+            return successWithCiphertext(ct);
         } catch (Exception e) {
-            throw new KeyGenerationException("RSA encryption failed: " + e.getMessage(), e);
+            throw wrapException("RSA encryption failed", e);
         }
     }
 
     @Override
-    public CryptoResponse decrypt(CryptoRequest request) throws Exception {
-        // Cast a EncryptRsaRequest si es posible, sino usar CryptoRequest como fallback
+    public CryptoResponse decrypt(CryptoRequest request) {
         EncryptRsaRequest rsaRequest = (request instanceof EncryptRsaRequest)
             ? (EncryptRsaRequest) request
             : castToEncryptRsaRequest(request);
@@ -58,18 +52,15 @@ public class RsaCryptoStrategy implements CryptoStrategy {
             String privatePem = rsaRequest.getKey();
             if (privatePem == null) throw new KeyGenerationException("Missing private key for RSA decryption");
             PrivateKey priv = parsePrivateKey(privatePem);
-            byte[] ct = Base64.getDecoder().decode(rsaRequest.getPayload());
+            byte[] ct = base64Decode(rsaRequest.getPayload());
 
             Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
             cipher.init(Cipher.DECRYPT_MODE, priv);
             byte[] pt = cipher.doFinal(ct);
 
-            CryptoResponse resp = new CryptoResponse();
-            resp.setSuccess(true);
-            resp.setPlaintext(new String(pt, java.nio.charset.StandardCharsets.UTF_8));
-            return resp;
+            return successWithPlaintext(utf8String(pt));
         } catch (Exception e) {
-            throw new KeyGenerationException("RSA decryption failed: " + e.getMessage(), e);
+            throw wrapException("RSA decryption failed", e);
         }
     }
 
@@ -89,7 +80,7 @@ public class RsaCryptoStrategy implements CryptoStrategy {
 
     private PublicKey parsePublicKey(String pem) throws Exception {
         String cleaned = normalizePem(pem);
-        byte[] der = Base64.getDecoder().decode(cleaned);
+        byte[] der = base64Decode(cleaned);
         X509EncodedKeySpec spec = new X509EncodedKeySpec(der);
         KeyFactory kf = KeyFactory.getInstance("RSA");
         return kf.generatePublic(spec);
@@ -97,10 +88,9 @@ public class RsaCryptoStrategy implements CryptoStrategy {
 
     private PrivateKey parsePrivateKey(String pem) throws Exception {
         String cleaned = normalizePem(pem);
-        byte[] der = Base64.getDecoder().decode(cleaned);
+        byte[] der = base64Decode(cleaned);
         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(der);
         KeyFactory kf = KeyFactory.getInstance("RSA");
         return kf.generatePrivate(spec);
     }
 }
-

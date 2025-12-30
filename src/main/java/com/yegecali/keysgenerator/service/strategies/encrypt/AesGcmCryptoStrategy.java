@@ -11,10 +11,9 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
-import java.util.Base64;
 
 @ApplicationScoped
-public class AesGcmCryptoStrategy implements CryptoStrategy {
+public class AesGcmCryptoStrategy extends AbstractCryptoStrategy {
 
     private static final int GCM_TAG_LENGTH = 128;
     private static final int IV_SIZE = 12;
@@ -23,8 +22,7 @@ public class AesGcmCryptoStrategy implements CryptoStrategy {
     public String getAlgorithm() { return CryptoAlgorithm.AES_GCM.getValue(); }
 
     @Override
-    public CryptoResponse encrypt(CryptoRequest request) throws Exception {
-        // Cast a EncryptAesRequest si es posible, sino usar CryptoRequest como fallback
+    public CryptoResponse encrypt(CryptoRequest request){
         EncryptAesRequest aesRequest = (request instanceof EncryptAesRequest)
             ? (EncryptAesRequest) request
             : castToEncryptAesRequest(request);
@@ -32,7 +30,7 @@ public class AesGcmCryptoStrategy implements CryptoStrategy {
         try {
             String keyB64 = aesRequest.getKey();
             if (keyB64 == null) throw new KeyGenerationException("Missing symmetric key for AES encryption");
-            byte[] key = Base64.getDecoder().decode(keyB64);
+            byte[] key = base64Decode(keyB64);
             byte[] iv = new byte[IV_SIZE];
             SecureRandom rnd = new SecureRandom();
             rnd.nextBytes(iv);
@@ -41,22 +39,19 @@ public class AesGcmCryptoStrategy implements CryptoStrategy {
             GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.ENCRYPT_MODE, keySpec, spec);
-            byte[] plaintext = aesRequest.getPayload().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            byte[] plaintext = toUtf8Bytes(aesRequest.getPayload());
             byte[] ct = cipher.doFinal(plaintext);
 
-            CryptoResponse resp = new CryptoResponse();
-            resp.setSuccess(true);
-            resp.setCiphertext(Base64.getEncoder().encodeToString(ct));
-            resp.setIv(Base64.getEncoder().encodeToString(iv));
+            CryptoResponse resp = successWithCiphertext(ct);
+            resp.setIv(base64Encode(iv));
             return resp;
         } catch (Exception e) {
-            throw new KeyGenerationException("AES-GCM encryption failed: " + e.getMessage(), e);
+            throw wrapException("AES-GCM encryption failed", e);
         }
     }
 
     @Override
-    public CryptoResponse decrypt(CryptoRequest request) throws Exception {
-        // Cast a EncryptAesRequest si es posible, sino usar CryptoRequest como fallback
+    public CryptoResponse decrypt(CryptoRequest request) {
         EncryptAesRequest aesRequest = (request instanceof EncryptAesRequest)
             ? (EncryptAesRequest) request
             : castToEncryptAesRequest(request);
@@ -67,23 +62,20 @@ public class AesGcmCryptoStrategy implements CryptoStrategy {
             if (keyB64 == null) throw new KeyGenerationException("Missing symmetric key for AES decryption");
             if (ivB64 == null) throw new KeyGenerationException("Missing IV for AES decryption");
 
-            byte[] key = Base64.getDecoder().decode(keyB64);
-            byte[] iv = Base64.getDecoder().decode(ivB64);
+            byte[] key = base64Decode(keyB64);
+            byte[] iv = base64Decode(ivB64);
 
             SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
             GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, keySpec, spec);
 
-            byte[] ct = Base64.getDecoder().decode(aesRequest.getPayload());
+            byte[] ct = base64Decode(aesRequest.getPayload());
             byte[] pt = cipher.doFinal(ct);
 
-            CryptoResponse resp = new CryptoResponse();
-            resp.setSuccess(true);
-            resp.setPlaintext(new String(pt, java.nio.charset.StandardCharsets.UTF_8));
-            return resp;
+            return successWithPlaintext(utf8String(pt));
         } catch (Exception e) {
-            throw new KeyGenerationException("AES-GCM decryption failed: " + e.getMessage(), e);
+            throw wrapException("AES-GCM decryption failed", e);
         }
     }
 
@@ -96,4 +88,3 @@ public class AesGcmCryptoStrategy implements CryptoStrategy {
         return aesRequest;
     }
 }
-

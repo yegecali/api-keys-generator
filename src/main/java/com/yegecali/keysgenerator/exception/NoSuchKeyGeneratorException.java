@@ -1,6 +1,5 @@
 package com.yegecali.keysgenerator.exception;
 
-public class NoSuchKeyGeneratorException extends RuntimeException {
-    public NoSuchKeyGeneratorException(String message) { super(message); }
+public class NoSuchKeyGeneratorException extends ApplicationException {
+    public NoSuchKeyGeneratorException(String message) { super(ErrorCode.UNKNOWN_TYPE, message); }
 }
-

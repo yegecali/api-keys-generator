@@ -4,6 +4,7 @@ import com.yegecali.keysgenerator.dto.CryptoAlgorithm;
 import com.yegecali.keysgenerator.exception.KeyGenerationException;
 import com.yegecali.keysgenerator.model.KeyModel;
 import com.yegecali.keysgenerator.service.KeyGenerationRequest;
+import com.yegecali.keysgenerator.service.KeyGenerator;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
@@ -12,9 +13,9 @@ import java.security.SecureRandom;
 import java.util.Base64;
 
 @ApplicationScoped
-public class AesKeyGenerationStrategy implements KeyGenerationStrategy {
+public class AesKeyGeneration implements KeyGenerator {
 
-    private static final Logger LOG = Logger.getLogger(AesKeyGenerationStrategy.class);
+    private static final Logger LOG = Logger.getLogger(AesKeyGeneration.class);
 
     @Override
     public String getType() {

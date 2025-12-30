@@ -5,7 +5,7 @@ import com.yegecali.keysgenerator.dto.CryptoResponse;
 
 public interface CryptoStrategy {
     String getAlgorithm();
-    CryptoResponse encrypt(CryptoRequest request) throws Exception;
-    CryptoResponse decrypt(CryptoRequest request) throws Exception;
+    CryptoResponse encrypt(CryptoRequest request) ;
+    CryptoResponse decrypt(CryptoRequest request) ;
 }
 

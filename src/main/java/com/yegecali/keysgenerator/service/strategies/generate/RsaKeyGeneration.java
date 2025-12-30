@@ -4,6 +4,7 @@ import com.yegecali.keysgenerator.dto.CryptoAlgorithm;
 import com.yegecali.keysgenerator.exception.KeyGenerationException;
 import com.yegecali.keysgenerator.model.KeyModel;
 import com.yegecali.keysgenerator.service.KeyGenerationRequest;
+import com.yegecali.keysgenerator.service.KeyGenerator;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
@@ -14,9 +15,9 @@ import java.security.PublicKey;
 import java.util.Base64;
 
 @ApplicationScoped
-public class RsaKeyGenerationStrategy implements KeyGenerationStrategy {
+public class RsaKeyGeneration implements KeyGenerator {
 
-    private static final Logger LOG = Logger.getLogger(RsaKeyGenerationStrategy.class);
+    private static final Logger LOG = Logger.getLogger(RsaKeyGeneration.class);
 
     @Override
     public String getType() {
@@ -34,8 +35,8 @@ public class RsaKeyGenerationStrategy implements KeyGenerationStrategy {
             PublicKey pub = kp.getPublic();
             PrivateKey priv = kp.getPrivate();
 
-            String publicPem = toPem(pub.getEncoded(), "PUBLIC KEY");
-            String privatePem = toPem(priv.getEncoded(), "PRIVATE KEY");
+            String publicPem = toPem(pub.getEncoded());
+            String privatePem = toPem(priv.getEncoded());
 
             KeyModel model = new KeyModel();
             model.setType(CryptoAlgorithm.RSA.getValue());
@@ -49,9 +50,8 @@ public class RsaKeyGenerationStrategy implements KeyGenerationStrategy {
         }
     }
 
-    private static String toPem(byte[] derBytes, String type) {
+    private static String toPem(byte[] derBytes) {
         // Usar Base64 simple sin saltos de línea para evitar caracteres de escape en JSON
-        String b64 = Base64.getEncoder().encodeToString(derBytes);
-        return b64;
+        return Base64.getEncoder().encodeToString(derBytes);
     }
 }

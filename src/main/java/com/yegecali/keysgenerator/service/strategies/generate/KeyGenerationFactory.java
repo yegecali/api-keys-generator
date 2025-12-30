@@ -1,6 +1,5 @@
-package com.yegecali.keysgenerator.factory;
+package com.yegecali.keysgenerator.service.strategies;
 
-import com.yegecali.keysgenerator.dto.CryptoAlgorithm;
 import com.yegecali.keysgenerator.exception.NoSuchKeyGeneratorException;
 import com.yegecali.keysgenerator.service.KeyGenerator;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -8,21 +7,24 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
 @ApplicationScoped
-public class KeyGeneratorFactory {
+public class KeyGenerationStrategyFactory {
+
+    private final Instance<KeyGenerator> strategies;
 
     @Inject
-    Instance<KeyGenerator> generators;
+    public KeyGenerationStrategyFactory(Instance<KeyGenerator> strategies) {
+        this.strategies = strategies;
+    }
 
     public KeyGenerator get(String type) {
         if (type == null) {
-            type = CryptoAlgorithm.RSA.getValue();
+            type = "RSA";
         }
-        for (KeyGenerator g : generators) {
-            if (g.getType().equalsIgnoreCase(type)) {
-                return g;
+        for (KeyGenerator s : strategies) {
+            if (s.getType().equalsIgnoreCase(type)) {
+                return s;
             }
         }
         throw new NoSuchKeyGeneratorException("No KeyGenerator registered for type: " + type);
     }
 }
-
