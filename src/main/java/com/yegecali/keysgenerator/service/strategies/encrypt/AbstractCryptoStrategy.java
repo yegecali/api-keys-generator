@@ -1,7 +1,6 @@
 package com.yegecali.keysgenerator.service.strategies.encrypt;
 
 import com.yegecali.keysgenerator.openapi.model.CryptoResponse;
-import com.yegecali.keysgenerator.exception.KeyGenerationException;
 
 /**
  * Base class with common helpers for crypto strategies.
@@ -36,9 +35,5 @@ public abstract class AbstractCryptoStrategy implements CryptoStrategy {
         resp.setSuccess(true);
         resp.setPlaintext(plaintext);
         return resp;
-    }
-
-    protected KeyGenerationException wrapException(String message, Exception e) {
-        return new KeyGenerationException(message + (e == null ? "" : (": " + e.getMessage())), e);
     }
 }

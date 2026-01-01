@@ -2,7 +2,7 @@ package com.yegecali.keysgenerator.service.strategies.encrypt;
 
 import com.yegecali.keysgenerator.openapi.model.CryptoRequest;
 import com.yegecali.keysgenerator.openapi.model.CryptoResponse;
-import com.yegecali.keysgenerator.exception.KeyGenerationException;
+import com.yegecali.keysgenerator.exception.ApplicationException;
 import com.yegecali.keysgenerator.config.AppConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -28,7 +28,7 @@ public class RsaCryptoStrategy extends AbstractCryptoStrategy implements CryptoS
         try {
             String algorithm = appConfig.crypto().rsa().algorithm();
             String keyB64 = request.getKey();
-            if (keyB64 == null) throw new KeyGenerationException("Missing public key for RSA encryption");
+            if (keyB64 == null) throw ApplicationException.missingKey("Missing public key for RSA encryption");
             PublicKey pub = parsePublicKey(keyB64);
             byte[] plaintext = toUtf8Bytes(request.getPayload());
 
@@ -37,8 +37,10 @@ public class RsaCryptoStrategy extends AbstractCryptoStrategy implements CryptoS
             byte[] ct = cipher.doFinal(plaintext);
 
             return successWithCiphertext(ct);
+        } catch (ApplicationException e) {
+            throw e;
         } catch (Exception e) {
-            throw wrapException("RSA encryption failed", e);
+            throw ApplicationException.encryptionFailed("RSA encryption failed", e);
         }
     }
 
@@ -47,7 +49,7 @@ public class RsaCryptoStrategy extends AbstractCryptoStrategy implements CryptoS
         try {
             String algorithm = appConfig.crypto().rsa().algorithm();
             String keyB64 = request.getKey();
-            if (keyB64 == null) throw new KeyGenerationException("Missing private key for RSA decryption");
+            if (keyB64 == null) throw ApplicationException.missingKey("Missing private key for RSA decryption");
             PrivateKey priv = parsePrivateKey(keyB64);
             byte[] ct = base64Decode(request.getPayload());
 
@@ -56,8 +58,10 @@ public class RsaCryptoStrategy extends AbstractCryptoStrategy implements CryptoS
             byte[] pt = cipher.doFinal(ct);
 
             return successWithPlaintext(utf8String(pt));
+        } catch (ApplicationException e) {
+            throw e;
         } catch (Exception e) {
-            throw wrapException("RSA decryption failed", e);
+            throw ApplicationException.decryptionFailed("RSA decryption failed", e);
         }
     }
 

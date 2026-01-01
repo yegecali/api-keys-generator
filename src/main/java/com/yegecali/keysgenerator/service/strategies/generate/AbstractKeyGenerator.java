@@ -1,6 +1,6 @@
 package com.yegecali.keysgenerator.service.strategies.generate;
 
-import com.yegecali.keysgenerator.exception.KeyGenerationException;
+import com.yegecali.keysgenerator.exception.ApplicationException;
 import com.yegecali.keysgenerator.model.KeyModel;
 import com.yegecali.keysgenerator.openapi.model.KeyGenerationRequest;
 import org.jboss.logging.Logger;
@@ -29,9 +29,5 @@ public abstract class AbstractKeyGenerator implements KeyGenerator {
         m.setType(type);
         m.setKeySize(keySize);
         return m;
-    }
-
-    protected KeyGenerationException wrapException(String message, Exception e) {
-        return new KeyGenerationException(message + (e == null ? "" : (": " + e.getMessage())), e);
     }
 }

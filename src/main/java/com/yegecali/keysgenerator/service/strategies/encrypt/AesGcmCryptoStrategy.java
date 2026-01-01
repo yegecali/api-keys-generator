@@ -2,7 +2,7 @@ package com.yegecali.keysgenerator.service.strategies.encrypt;
 
 import com.yegecali.keysgenerator.openapi.model.CryptoRequest;
 import com.yegecali.keysgenerator.openapi.model.CryptoResponse;
-import com.yegecali.keysgenerator.exception.KeyGenerationException;
+import com.yegecali.keysgenerator.exception.ApplicationException;
 import com.yegecali.keysgenerator.config.AppConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -28,7 +28,7 @@ public class AesGcmCryptoStrategy extends AbstractCryptoStrategy implements Cryp
             int ivSize = appConfig.crypto().aesGcm().ivSize();
 
             String keyB64 = request.getKey();
-            if (keyB64 == null) throw new KeyGenerationException("Missing symmetric key for AES encryption");
+            if (keyB64 == null) throw ApplicationException.missingKey("Missing symmetric key for AES encryption");
             byte[] key = base64Decode(keyB64);
             byte[] iv = new byte[ivSize];
             SecureRandom rnd = new SecureRandom();
@@ -44,8 +44,10 @@ public class AesGcmCryptoStrategy extends AbstractCryptoStrategy implements Cryp
             CryptoResponse resp = successWithCiphertext(ct);
             resp.setIv(base64Encode(iv));
             return resp;
+        } catch (ApplicationException e) {
+            throw e;
         } catch (Exception e) {
-            throw wrapException("AES-GCM encryption failed", e);
+            throw ApplicationException.encryptionFailed("AES-GCM encryption failed", e);
         }
     }
 
@@ -56,8 +58,8 @@ public class AesGcmCryptoStrategy extends AbstractCryptoStrategy implements Cryp
 
             String keyB64 = request.getKey();
             String ivB64 = request.getIv();
-            if (keyB64 == null) throw new KeyGenerationException("Missing symmetric key for AES decryption");
-            if (ivB64 == null) throw new KeyGenerationException("Missing IV for AES decryption");
+            if (keyB64 == null) throw ApplicationException.missingKey("Missing symmetric key for AES decryption");
+            if (ivB64 == null) throw ApplicationException.missingParameter("Missing IV for AES decryption");
 
             byte[] key = base64Decode(keyB64);
             byte[] iv = base64Decode(ivB64);
@@ -71,8 +73,10 @@ public class AesGcmCryptoStrategy extends AbstractCryptoStrategy implements Cryp
             byte[] pt = cipher.doFinal(ct);
 
             return successWithPlaintext(utf8String(pt));
+        } catch (ApplicationException e) {
+            throw e;
         } catch (Exception e) {
-            throw wrapException("AES-GCM decryption failed", e);
+            throw ApplicationException.decryptionFailed("AES-GCM decryption failed", e);
         }
     }
 }

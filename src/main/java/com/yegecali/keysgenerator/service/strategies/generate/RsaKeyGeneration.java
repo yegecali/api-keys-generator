@@ -4,6 +4,7 @@ import com.yegecali.keysgenerator.openapi.model.KeyGenerationRequest;
 import com.yegecali.keysgenerator.model.KeyModel;
 import com.yegecali.keysgenerator.openapi.model.KeyGenerationRequest.TypeEnum;
 import com.yegecali.keysgenerator.config.AppConfig;
+import com.yegecali.keysgenerator.exception.ApplicationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -44,7 +45,7 @@ public class RsaKeyGeneration extends AbstractKeyGenerator implements KeyGenerat
             return model;
         } catch (Exception e) {
             getLogger().error("Error generating RSA key pair", e);
-            throw wrapException("Failed to generate RSA key pair", e);
+            throw ApplicationException.keyGenerationFailed("Failed to generate RSA key pair", e);
         }
     }
 }
