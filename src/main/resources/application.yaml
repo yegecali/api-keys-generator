@@ -1,0 +1,40 @@
+quarkus:
+  application:
+    name: "API Keys Generator"
+    version: "1.0.0"
+  http:
+    port: 8080
+  log:
+    level: INFO
+    category:
+      "com.yegecali.keysgenerator":
+        level: DEBUG
+
+app:
+  key-generation:
+    rsa:
+      allowed-sizes: [2048, 3072, 4096]
+      default-size: 2048
+      algorithm: "RSA"
+    aes:
+      allowed-sizes: [128, 192, 256]
+      default-size: 256
+      algorithm: "AES"
+  
+  crypto:
+    rsa:
+      algorithm: "RSA/ECB/OAEPWithSHA-256AndMGF1Padding"
+      key-factory-algorithm: "RSA"
+    aes-gcm:
+      algorithm: "AES/GCM/NoPadding"
+      tag-length: 128
+      iv-size: 12
+      cipher-instance: "AES"
+  
+  api:
+    endpoints:
+      keys-path: "/keys"
+      crypto-path: "/crypto"
+      rsa-legacy-path: "/keys/rsa"
+      media-type: "application/json"
+

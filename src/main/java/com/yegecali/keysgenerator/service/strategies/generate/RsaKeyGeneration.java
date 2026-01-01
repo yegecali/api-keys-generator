@@ -3,7 +3,9 @@ package com.yegecali.keysgenerator.service.strategies.generate;
 import com.yegecali.keysgenerator.openapi.model.KeyGenerationRequest;
 import com.yegecali.keysgenerator.model.KeyModel;
 import com.yegecali.keysgenerator.openapi.model.KeyGenerationRequest.TypeEnum;
+import com.yegecali.keysgenerator.config.AppConfig;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -13,6 +15,9 @@ import java.security.PublicKey;
 @ApplicationScoped
 public class RsaKeyGeneration extends AbstractKeyGenerator implements KeyGenerator {
 
+    @Inject
+    AppConfig appConfig;
+
     @Override
     public String getType() {
         return TypeEnum.RSA.getValue();
@@ -20,7 +25,8 @@ public class RsaKeyGeneration extends AbstractKeyGenerator implements KeyGenerat
 
     @Override
     public KeyModel generate(KeyGenerationRequest request) {
-        int keySize = resolveKeySize(request, 2048);
+        int defaultSize = appConfig.keyGeneration().rsa().defaultSize();
+        int keySize = resolveKeySize(request, defaultSize);
         try {
             getLogger().debugf("Generating RSA key pair with size %d", keySize);
             KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");

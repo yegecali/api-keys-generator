@@ -52,6 +52,52 @@ java -jar target/quarkus-app/quarkus-run.jar
 
 ---
 
+## Configuración de la Aplicación
+
+Todas las configuraciones se encuentran en `src/main/resources/application.yaml`:
+
+### Tamaños de Claves Permitidas
+```yaml
+app:
+  key-generation:
+    rsa:
+      allowed-sizes: [2048, 3072, 4096]
+      default-size: 2048
+    aes:
+      allowed-sizes: [128, 192, 256]
+      default-size: 256
+```
+
+### Parámetros Criptográficos
+```yaml
+app:
+  crypto:
+    rsa:
+      algorithm: "RSA/ECB/OAEPWithSHA-256AndMGF1Padding"
+      key-factory-algorithm: "RSA"
+    aes-gcm:
+      algorithm: "AES/GCM/NoPadding"
+      tag-length: 128
+      iv-size: 12
+      cipher-instance: "AES"
+```
+
+### Endpoints
+```yaml
+app:
+  api:
+    endpoints:
+      keys-path: "/keys"
+      crypto-path: "/crypto"
+      rsa-legacy-path: "/keys/rsa"
+      media-type: "application/json"
+```
+
+**Nota:** Puedes sobrescribir cualquier configuración usando variables de entorno. 
+Por ejemplo: `export APP_KEY_GENERATION_RSA_DEFAULT_SIZE=4096`
+
+---
+
 ## Endpoints principales (resumen)
 - GET  /keys/rsa — genera una llave RSA (por defecto 2048)
 - GET  /keys?type={RSA|AES_GCM}&size={size} — genera llaves dependiendo del tipo y tamaño

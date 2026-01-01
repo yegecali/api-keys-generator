@@ -2,20 +2,21 @@ package com.yegecali.keysgenerator.validator;
 
 import com.yegecali.keysgenerator.openapi.model.KeyGenerationRequest;
 import com.yegecali.keysgenerator.exception.ApplicationException;
+import com.yegecali.keysgenerator.config.AppConfig;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 @ApplicationScoped
 public class KeyRequestValidator {
 
-    private static final List<Integer> RSA_ALLOWED = Arrays.asList(2048, 3072, 4096);
-    private static final List<Integer> AES_ALLOWED = Arrays.asList(128, 192, 256);
+    @Inject
+    AppConfig appConfig;
 
     public KeyGenerationRequest validateAndBuild(String typeParam, Integer size) {
-        ValidationContext ctx = new ValidationContext(typeParam, size);
+        ValidationContext ctx = new ValidationContext(typeParam, size, appConfig);
         ValidationHandler chain = new NormalizeTypeHandler()
                 .setNext(new SizeValidationHandler());
         chain.handle(ctx);
@@ -28,12 +29,14 @@ public class KeyRequestValidator {
     private static class ValidationContext {
         final String typeParam;
         final Integer size;
+        final AppConfig config;
         String normalizedType;
         KeyGenerationRequest result;
 
-        ValidationContext(String typeParam, Integer size) {
+        ValidationContext(String typeParam, Integer size, AppConfig config) {
             this.typeParam = typeParam;
             this.size = size;
+            this.config = config;
         }
     }
 
@@ -70,10 +73,13 @@ public class KeyRequestValidator {
         @Override
         public void handle(ValidationContext ctx) {
             String type = ctx.normalizedType;
+            List<Integer> rsaAllowed = ctx.config.keyGeneration().rsa().allowedSizes();
+            List<Integer> aesAllowed = ctx.config.keyGeneration().aes().allowedSizes();
+
             if ("RSA".equals(type)) {
-                int keySize = (ctx.size == null) ? 2048 : ctx.size;
-                if (!RSA_ALLOWED.contains(keySize)) {
-                    throw ApplicationException.invalidRequest("Invalid RSA key size. Allowed: " + RSA_ALLOWED);
+                int keySize = (ctx.size == null) ? ctx.config.keyGeneration().rsa().defaultSize() : ctx.size;
+                if (!rsaAllowed.contains(keySize)) {
+                    throw ApplicationException.invalidRequest("Invalid RSA key size. Allowed: " + rsaAllowed);
                 }
                 KeyGenerationRequest r = new KeyGenerationRequest();
                 r.setType(KeyGenerationRequest.TypeEnum.RSA);
@@ -82,9 +88,9 @@ public class KeyRequestValidator {
                 return;
             }
             if ("AES_GCM".equals(type)) {
-                int keySize = (ctx.size == null) ? 256 : ctx.size;
-                if (!AES_ALLOWED.contains(keySize)) {
-                    throw ApplicationException.invalidRequest("Invalid AES key size. Allowed: " + AES_ALLOWED);
+                int keySize = (ctx.size == null) ? ctx.config.keyGeneration().aes().defaultSize() : ctx.size;
+                if (!aesAllowed.contains(keySize)) {
+                    throw ApplicationException.invalidRequest("Invalid AES key size. Allowed: " + aesAllowed);
                 }
                 KeyGenerationRequest r = new KeyGenerationRequest();
                 r.setType(KeyGenerationRequest.TypeEnum.AES_GCM);

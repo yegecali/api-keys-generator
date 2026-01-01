@@ -3,7 +3,9 @@ package com.yegecali.keysgenerator.service.strategies.encrypt;
 import com.yegecali.keysgenerator.openapi.model.CryptoRequest;
 import com.yegecali.keysgenerator.openapi.model.CryptoResponse;
 import com.yegecali.keysgenerator.exception.KeyGenerationException;
+import com.yegecali.keysgenerator.config.AppConfig;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 import javax.crypto.Cipher;
 import java.security.KeyFactory;
@@ -15,19 +17,22 @@ import java.security.spec.X509EncodedKeySpec;
 @ApplicationScoped
 public class RsaCryptoStrategy extends AbstractCryptoStrategy implements CryptoStrategy {
 
+    @Inject
+    AppConfig appConfig;
+
     @Override
     public String getAlgorithm() { return "RSA"; }
 
     @Override
     public CryptoResponse encrypt(CryptoRequest request) {
-        // The generated models are separate POJOs; inspect the request type and read fields directly
         try {
-            String publicPem = request.getKey();
-            if (publicPem == null) throw new KeyGenerationException("Missing public key for RSA encryption");
-            PublicKey pub = parsePublicKey(publicPem);
+            String algorithm = appConfig.crypto().rsa().algorithm();
+            String keyB64 = request.getKey();
+            if (keyB64 == null) throw new KeyGenerationException("Missing public key for RSA encryption");
+            PublicKey pub = parsePublicKey(keyB64);
             byte[] plaintext = toUtf8Bytes(request.getPayload());
 
-            Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+            Cipher cipher = Cipher.getInstance(algorithm);
             cipher.init(Cipher.ENCRYPT_MODE, pub);
             byte[] ct = cipher.doFinal(plaintext);
 
@@ -40,12 +45,13 @@ public class RsaCryptoStrategy extends AbstractCryptoStrategy implements CryptoS
     @Override
     public CryptoResponse decrypt(CryptoRequest request) {
         try {
-            String privatePem = request.getKey();
-            if (privatePem == null) throw new KeyGenerationException("Missing private key for RSA decryption");
-            PrivateKey priv = parsePrivateKey(privatePem);
+            String algorithm = appConfig.crypto().rsa().algorithm();
+            String keyB64 = request.getKey();
+            if (keyB64 == null) throw new KeyGenerationException("Missing private key for RSA decryption");
+            PrivateKey priv = parsePrivateKey(keyB64);
             byte[] ct = base64Decode(request.getPayload());
 
-            Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+            Cipher cipher = Cipher.getInstance(algorithm);
             cipher.init(Cipher.DECRYPT_MODE, priv);
             byte[] pt = cipher.doFinal(ct);
 
@@ -64,7 +70,8 @@ public class RsaCryptoStrategy extends AbstractCryptoStrategy implements CryptoS
         String cleaned = normalizePem(pem);
         byte[] der = base64Decode(cleaned);
         X509EncodedKeySpec spec = new X509EncodedKeySpec(der);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
+        String keyFactoryAlgorithm = appConfig.crypto().rsa().keyFactoryAlgorithm();
+        KeyFactory kf = KeyFactory.getInstance(keyFactoryAlgorithm);
         return kf.generatePublic(spec);
     }
 
@@ -72,7 +79,8 @@ public class RsaCryptoStrategy extends AbstractCryptoStrategy implements CryptoS
         String cleaned = normalizePem(pem);
         byte[] der = base64Decode(cleaned);
         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(der);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
+        String keyFactoryAlgorithm = appConfig.crypto().rsa().keyFactoryAlgorithm();
+        KeyFactory kf = KeyFactory.getInstance(keyFactoryAlgorithm);
         return kf.generatePrivate(spec);
     }
 }
